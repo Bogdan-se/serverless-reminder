@@ -1,0 +1,16 @@
+{
+  "name": "serverless-reminder",
+  "version": "1.0.0",
+  "description": "Sample of serverless app",
+  "main": "''",
+  "dependencies": {
+    "aws-sdk": "^2.868.0",
+    "uuid": "^8.3.2"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bohdan Semenovych",
+  "license": "ISC"
+}

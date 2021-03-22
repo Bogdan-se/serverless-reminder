@@ -1,0 +1,74 @@
+service: serverless-reminder
+frameworkVersion: '2'
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: us-east-1
+  memorySize: 128
+  apiGateway:
+    shouldStartNameWithService: true
+  environment:
+    REMINDER_TABLE: ${self:service}-${opt:stage, self:provider.stage}
+  iam:
+    role:
+      statements:
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:provider.environment.REMINDER_TABLE}"
+
+functions:
+  reminderList:
+    handler: reminder/list.handler
+    events:
+      - http:
+          path: reminder
+          method: get
+  reminderGet:
+    handler: reminder/getById.handler
+    events:
+      - http:
+          path: reminder/{id}
+          method: get
+  reminderCreate:
+    handler: reminder/create.handler
+    events:
+      - http:
+          path: reminder
+          method: post
+  reminderDelete:
+    handler: reminder/delete.handler
+    events:
+      - http:
+          path: reminder/{id}
+          method: delete
+  reminderUpdate:
+    handler: reminder/update.handler
+    events:
+      - http:
+          path: reminder/{id}
+          method: put
+
+resources:
+  Resources:
+    UsersTable:
+      Type: AWS::DynamoDB::Table
+      Properties:
+        AttributeDefinitions:
+          - AttributeName: id
+            AttributeType: S
+        KeySchema:
+          - AttributeName: id
+            KeyType: HASH
+        ProvisionedThroughput:
+          ReadCapacityUnits: 1
+          WriteCapacityUnits: 1
+        TableName: ${self:provider.environment.REMINDER_TABLE}
