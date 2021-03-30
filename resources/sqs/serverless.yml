@@ -1,0 +1,23 @@
+service: reminder-sqs
+frameworkVersion: "2"
+
+provider:
+  name: aws
+  stage: dev
+  region: us-east-1
+
+custom:
+  queue: ${file(../../serverless.common.yml):custom.queue}
+
+resources:
+  Resources:
+    S3Queue:
+      Type: "AWS::SQS::Queue"
+      Properties:
+        QueueName: ${self:custom.queue}
+  Outputs:
+    S3Queue:
+      Value:
+        "Ref": S3Queue
+      Export:
+        Name: ${self:custom.queue}

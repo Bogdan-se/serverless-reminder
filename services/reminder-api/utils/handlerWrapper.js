@@ -1,4 +1,4 @@
-module.exports = (func) => async (event, context, callback) => {
+export default (func) => async (event, context, callback) => {
     try {
         const result = await func(event,context);
         callback(null, {

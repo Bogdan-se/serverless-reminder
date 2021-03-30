@@ -1,0 +1,71 @@
+service: reminder-api
+frameworkVersion: '2'
+
+custom:
+  reminder_table: ${file(../../serverless.common.yml):custom.reminder_table}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: us-east-1
+  memorySize: 128
+  apiGateway:
+    shouldStartNameWithService: true
+  environment:
+    REMINDER_TABLE: !ImportValue ${self:custom.reminder_table}
+  tracing:
+    lambda: true
+    apiGateway: true
+  iam:
+    role:
+      statements:
+        - ${file(../../serverless.common.yml):lambdaPolicyXRay}
+        - Effect: Allow
+          Action:
+            - dynamodb:Query
+            - dynamodb:Scan
+            - dynamodb:GetItem
+            - dynamodb:PutItem
+            - dynamodb:UpdateItem
+            - dynamodb:DeleteItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.reminder_table}"
+
+package:
+  individually: true
+
+plugins:
+  - serverless-bundle
+
+functions:
+  reminderList:
+    handler: api/list.handler
+    events:
+      - http:
+          path: reminder
+          method: get
+  reminderGet:
+    handler: api/getById.handler
+    events:
+      - http:
+          path: api/{id}
+          method: get
+  reminderCreate:
+    handler: api/create.handler
+    events:
+      - http:
+          path: reminder
+          method: post
+  reminderDelete:
+    handler: api/delete.handler
+    events:
+      - http:
+          path: api/{id}
+          method: delete
+  reminderUpdate:
+    handler: api/update.handler
+    events:
+      - http:
+          path: api/{id}
+          method: put

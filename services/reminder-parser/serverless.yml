@@ -1,0 +1,44 @@
+service: reminder-parser
+frameworkVersion: '2'
+
+custom:
+  bucket: reminder-${self:service}-${opt:stage, self:provider.stage}
+  queue: ${file(../../serverless.common.yml):custom.queue}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: us-east-1
+  memorySize: 128
+  environment:
+    QUEUE_URL: !ImportValue ${self:custom.queue}
+    REGION: ${self:provider.region}
+  tracing:
+    lambda: true
+  iam:
+    role:
+      statements:
+        - ${file(../../serverless.common.yml):lambdaPolicyXRay}
+        - Effect: Allow
+          Action:
+            - s3:GetObject
+          Resource: "arn:aws:s3:::${self:custom.bucket}/*"
+        - Effect: Allow
+          Action:
+            - sqs:SendMessage
+          Resource: "arn:aws:sqs:*:*:${self:custom.queue}"
+
+plugins:
+  - serverless-bundle
+
+functions:
+  processS3ToSqs:
+    handler: handler.processS3ToSQS
+    events:
+      - s3:
+         bucket: ${self:custom.bucket}
+         event: s3:ObjectCreated:*
+         rules:
+          - suffix: .json

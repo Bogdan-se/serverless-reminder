@@ -1,8 +1,7 @@
-const AWS = require('aws-sdk');
-const {v4} = require('uuid');
+import dynamoDbClient from '../aws/dynamo-db';
+import {v4}  from 'uuid';
 
 const REMINDER_TABLE = process.env.REMINDER_TABLE;
-const dynamoDbClient = new AWS.DynamoDB.DocumentClient();
 
 class ReminderDAO {
     async list () {
@@ -10,7 +9,7 @@ class ReminderDAO {
             TableName: REMINDER_TABLE,
         };
 
-        const { Items } = await dynamoDbClient.scan(params).promise();
+        const { Items } = await dynamoDbClient.scan(params);
 
         return Items;
     }
@@ -23,21 +22,21 @@ class ReminderDAO {
             },
         };
 
-        const { Item } = await dynamoDbClient.get(params).promise();
+        const { Item } = await dynamoDbClient.get(params);
 
         return Item;
     }
 
-    async create (data) {
+    async create (item) {
         const params = {
             TableName: REMINDER_TABLE,
             Item: {
                 id: v4(),
-                ...data,
+                ...item,
             },
         };
 
-        await dynamoDbClient.put(params).promise();
+        await dynamoDbClient.put(params);
 
         return params.Item;
     }
@@ -55,7 +54,7 @@ class ReminderDAO {
             ReturnValues: 'ALL_NEW',
         };
 
-        const {Attributes} = await dynamoDbClient.update(params).promise();
+        const {Attributes} = await dynamoDbClient.update(params);
         return Attributes;
     }
 
@@ -66,8 +65,22 @@ class ReminderDAO {
                 id,
             },
         };
-        return dynamoDbClient.delete(params).promise();
+        return dynamoDbClient.delete(params);
+    }
+
+    async bulkCreate (items) {
+        const params = {
+            RequestItems: {
+                [REMINDER_TABLE]: items.map(item => ({
+                    PutRequest: {
+                        Item: item
+                    }
+                }))
+            }
+        };
+
+        return dynamoDbClient.batchWrite(params);
     }
 }
 
-module.exports = new ReminderDAO();
+export default new ReminderDAO();

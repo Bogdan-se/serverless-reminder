@@ -1,0 +1,11 @@
+{
+  "name": "reminder-parser",
+  "version": "1.0.0",
+  "description": "Service for parsing data in s3 and process to sqs",
+  "main": "''",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "author": "Bohdan Semenovych",
+  "license": "ISC"
+}

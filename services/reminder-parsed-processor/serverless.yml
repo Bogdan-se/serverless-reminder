@@ -1,0 +1,50 @@
+service: reminder-parsed-processor
+frameworkVersion: '2'
+
+custom:
+  reminder_table: ${file(../../serverless.common.yml):custom.reminder_table}
+  queue: ${file(../../serverless.common.yml):custom.queue}
+  sqs_arn:
+    Fn::Join:
+      - ":"
+      - - arn
+        - aws
+        - sqs
+        - Ref: AWS::Region
+        - Ref: AWS::AccountId
+        - ${self:custom.queue}
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  lambdaHashingVersion: 20201221
+  stage: dev
+  region: us-east-1
+  memorySize: 128
+  environment:
+    REMINDER_TABLE: !ImportValue ${self:custom.reminder_table}
+  tracing:
+    lambda: true
+  iam:
+    role:
+      statements:
+        - ${file(../../serverless.common.yml):lambdaPolicyXRay}
+        - Effect: Allow
+          Action:
+            - dynamodb:BatchWriteItem
+          Resource: "arn:aws:dynamodb:${opt:region, self:provider.region}:*:table/${self:custom.reminder_table}"
+        - Effect: Allow
+          Action:
+            - "sqs:*"
+          Resource: "arn:aws:sqs:*:*:${self:custom.queue}"
+
+plugins:
+  - serverless-bundle
+
+functions:
+  saveFromSqs:
+    handler: handler.processSqs
+    events:
+      - sqs:
+          arn: ${self:custom.sqs_arn}
+          batchSize: 1

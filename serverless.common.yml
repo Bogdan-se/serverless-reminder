@@ -1,0 +1,13 @@
+provider:
+  stage: dev
+
+custom:
+  reminder_table: reminder-table-${opt:stage, self:provider.stage}
+  queue: s3-reminder-${opt:stage, self:provider.stage}
+
+lambdaPolicyXRay:
+  Effect: Allow
+  Action:
+    - xray:PutTraceSegments
+    - xray:PutTelemetryRecords
+  Resource: "*"
